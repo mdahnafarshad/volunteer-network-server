@@ -7,6 +7,10 @@ const port = process.env.PORT || 5000
 require('dotenv').config()
 app.use(cors());
 
+// express middleware is added.......... then data is send to the server.
+app.use(express.json());
+
+
 
 // test this connection server 
 app.get('/', (req, res) => {
@@ -76,9 +80,9 @@ async function run() {
 
 
 
-    
+
     // create a new document 
-    app.post('/registerUser', async(req, res)=>{
+    app.post('/registerUser/', async(req, res)=>{
       const register = req.body;
       console.log('83 line-', register);
       // const result = await registerUserCollection.insertOne(register);
