@@ -50,48 +50,68 @@ async function run() {
     const cards = database.collection("cardList")
     const registerUserCollection = database.collection("registerUser");
     // collections the data
-    
+
 
 
     // find the  all  documents in there collection
-    app.get('/cards', async(req, res)=>{
-        const cursor = cards.find()
-        const results = await cursor.toArray();
-        console.log(results);
-        res.send(results);
+    app.get('/cards', async (req, res) => {
+      const cursor = cards.find()
+      const results = await cursor.toArray();
+      console.log(results);
+      res.send(results);
     })
 
 
 
     //find a single document in the collection
-    app.get('/donate/:id', async(req, res)=>{
-        const id = req.params.id;
-        console.log("line no 62"+id);
-        const query = {_id: new ObjectId(id)};
-        const option = {
-            projection: {  title: 1, photoURL: 1 },
-        }
-        const result = await cards.findOne(query, option);
-        res.send(result);
+    app.get('/donate/:id', async (req, res) => {
+      const id = req.params.id;
+      console.log("line no 62" + id);
+      const query = { _id: new ObjectId(id) };
+      const option = {
+        projection: { title: 1, photoURL: 1 },
+      }
+      const result = await cards.findOne(query, option);
+      res.send(result);
     });
 
 
+    // user email base data....
+    app.get('/donationList', async (req, res) => {
+      console.log(req.query?.email, "line 94");
+      let query = {};
+      if (req.query?.email) {
+        query = { email: req.query?.email };
+      }
+      console.log(query, 'line 101');
+      const result = await registerUserCollection.find(query).toArray();
+      res.send(result);
 
 
-
-
-
-    // create a new document 
-    app.post('/registerUser/', async(req, res)=>{
-      const register = req.body;
-      console.log('83 line-', register);
-      // const result = await registerUserCollection.insertOne(register);
-      // console.log('85'+result);
-      // res.send(result);
     })
 
-    
 
+
+
+    // create a new document / insert a document into the database
+    app.post('/registerUser/', async(req, res) => {
+      const register = req.body;
+      console.log('83 line-', register);
+      const result = await registerUserCollection.insertOne(register);
+      console.log('85' + result);
+      res.send(result);
+    })
+
+
+    
+    app.delete('/donationList/:id', async(req, res)=>{
+      console.log(req.params.id)
+      const id = req.params.id
+      const query = {_id: new ObjectId(id)}
+      const result = await registerUserCollection.deleteOne(query);
+      console.log(result);
+      res.send(result);
+    })
 
 
 
