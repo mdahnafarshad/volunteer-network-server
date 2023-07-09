@@ -94,7 +94,7 @@ async function run() {
 
 
     // create a new document / insert a document into the database
-    app.post('/registerUser/', async(req, res) => {
+    app.post('/registerUser/', async (req, res) => {
       const register = req.body;
       console.log('83 line-', register);
       const result = await registerUserCollection.insertOne(register);
@@ -103,17 +103,32 @@ async function run() {
     })
 
 
-    
-    app.delete('/donationList/:id', async(req, res)=>{
-      console.log(req.params.id)
+    // create a delete operation
+    app.delete('/donationList/:id', async (req, res) => {
+      // console.log(req.params.id)
       const id = req.params.id
-      const query = {_id: new ObjectId(id)}
+      const query = { _id: new ObjectId(id) }
       const result = await registerUserCollection.deleteOne(query);
-      console.log(result);
+      // console.log(result);
       res.send(result);
     })
 
 
+    // create a update operation
+    app.patch('/donationList/:id', async (req, res) => {
+      const id = req.params.id;
+      console.log(id,'120 line');
+      const filter = { _id: new ObjectId(id) };
+      const updatedList = req.body;
+      console.log(updatedList, 'line 120');
+      const updateDoc = {
+        $set: {
+          status: updatedList.status
+        },
+      };
+      const result = await registerUserCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
