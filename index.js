@@ -1,7 +1,9 @@
 const express = require('express')
-const app = express()
 const cors = require('cors')
+const jwt = require('jsonwebtoken')
+const app = express()
 const port = process.env.PORT || 5000
+
 
 // middleware cors
 require('dotenv').config()
@@ -39,6 +41,32 @@ const client = new MongoClient(uri, {
   }
 });
 
+
+//verify jwt..
+const verifyJWT = (req, res, next)=>{
+  console.log('heating jwt verify');
+  console.log(req.headers.authorization)
+  const authorization = req.headers.authorization;
+  if(!authorization){
+    return res.status(401).send({error: true, message: 'unauthorized access'});
+  }
+  const token = authorization.split(' ')[1];
+  console.log('token = ',token)
+  jwt.verify(token, process.env.AccessTokenSecret, (error, decoded)=>{
+    if(error){
+      return res.status(error).send({error: true, message:'unauthorized access'});
+    }
+    // store the token in the access token....
+    req.decoded = decoded;
+    next();
+  });
+
+}
+
+
+
+
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -52,12 +80,26 @@ async function run() {
     // collections the data
 
 
+    //jwt generate the token
+    app.post('/jwt', (req, res)=>{
+      const user = req.body;
+      console.log(user);
+      const token = jwt.sign(user, process.env.AccessTokenSecret, {expiresIn: '10h'});
+      console.log(token);
+      res.send({token});
+    })
+
+
+
+
+
+
 
     // find the  all  documents in there collection
     app.get('/cards', async (req, res) => {
       const cursor = cards.find()
       const results = await cursor.toArray();
-      console.log(results);
+      // console.log(results);
       res.send(results);
     })
 
@@ -77,13 +119,14 @@ async function run() {
 
 
     // user email base data....
-    app.get('/donationList', async (req, res) => {
-      console.log(req.query?.email, "line 94");
+    app.get('/donationList',verifyJWT, async (req, res) => {
+      // console.log(req.query.email)
+      // console.log(req.headers.authorization.split(' ')[1])
+      console.log('came back after verification....');
       let query = {};
       if (req.query?.email) {
         query = { email: req.query?.email };
       }
-      console.log(query, 'line 101');
       const result = await registerUserCollection.find(query).toArray();
       res.send(result);
 
@@ -96,9 +139,7 @@ async function run() {
     // create a new document / insert a document into the database
     app.post('/registerUser/', async (req, res) => {
       const register = req.body;
-      console.log('83 line-', register);
       const result = await registerUserCollection.insertOne(register);
-      console.log('85' + result);
       res.send(result);
     })
 
@@ -117,7 +158,6 @@ async function run() {
     // create a update operation
     app.patch('/donationList/:id', async (req, res) => {
       const id = req.params.id;
-      console.log(id,'120 line');
       const filter = { _id: new ObjectId(id) };
       const updatedList = req.body;
       console.log(updatedList, 'line 120');
