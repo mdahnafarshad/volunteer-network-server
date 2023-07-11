@@ -14,14 +14,6 @@ app.use(express.json());
 
 
 
-// test this connection server 
-app.get('/', (req, res) => {
-  res.send('Hello World!')
-})
-
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
-})
 
 
 
@@ -43,18 +35,18 @@ const client = new MongoClient(uri, {
 
 
 //verify jwt..
-const verifyJWT = (req, res, next)=>{
+const verifyJWT = (req, res, next) => {
   console.log('heating jwt verify');
   console.log(req.headers.authorization)
   const authorization = req.headers.authorization;
-  if(!authorization){
-    return res.status(401).send({error: true, message: 'unauthorized access'});
+  if (!authorization) {
+    return res.status(401).send({ error: true, message: 'unauthorized access' });
   }
   const token = authorization.split(' ')[1];
-  console.log('token = ',token)
-  jwt.verify(token, process.env.AccessTokenSecret, (error, decoded)=>{
-    if(error){
-      return res.status(error).send({error: true, message:'unauthorized access'});
+  console.log('token = ', token)
+  jwt.verify(token, process.env.AccessTokenSecret, (error, decoded) => {
+    if (error) {
+      return res.status(401).send({ error: true, message: 'unauthorized access' });
     }
     // store the token in the access token....
     req.decoded = decoded;
@@ -80,13 +72,13 @@ async function run() {
     // collections the data
 
 
-    //jwt generate the token
-    app.post('/jwt', (req, res)=>{
+    //jwt generate a token
+    app.post('/jwt', (req, res) => {
       const user = req.body;
       console.log(user);
-      const token = jwt.sign(user, process.env.AccessTokenSecret, {expiresIn: '10h'});
+      const token = jwt.sign(user, process.env.AccessTokenSecret, { expiresIn: '10h'});
       console.log(token);
-      res.send({token});
+      res.send({ token });
     })
 
 
@@ -119,10 +111,17 @@ async function run() {
 
 
     // user email base data....
-    app.get('/donationList',verifyJWT, async (req, res) => {
+    app.get('/donationList', verifyJWT, async (req, res) => {
       // console.log(req.query.email)
       // console.log(req.headers.authorization.split(' ')[1])
-      console.log('came back after verification....');
+      const decoded = req.decoded
+      console.log('came back after verification....', decoded);
+
+      // check the authorization email
+      if(decoded?.email !== req.query?.email){
+        return res.status(403).send({error: 1, message: 'forbidden access denied'});
+      }
+
       let query = {};
       if (req.query?.email) {
         query = { email: req.query?.email };
@@ -179,3 +178,16 @@ async function run() {
   }
 }
 run().catch(console.dir);
+
+
+
+
+
+// test this connection server 
+app.get('/', (req, res) => {
+  res.send('Hello World!')
+})
+
+app.listen(port, () => {
+  console.log(`Example app listening on port ${port}`)
+})
